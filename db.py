@@ -5,7 +5,8 @@ import requests
 
 
 CENTRIFUGO_TOKEN = "58c2400b-831d-411d-8fe8-31b6e337738b"
-settings_PLUGIN_ID="61694eea9ea5d3be97df2973"
+settings_PLUGIN_ID = "61694eea9ea5d3be97df2973"
+
 
 class Dbnoticeboard:
     """Class based DB to Read and write to zc_core using the read and write
