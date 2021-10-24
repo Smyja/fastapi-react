@@ -10,7 +10,8 @@ from .db import db
 from .utils import user_rooms
 from .models import CreateNotice
 
-app = FastAPI()
+app = FastAPI(title='Noticeboard API',
+    description='Swagger Documentaion For the Noticeboard plugin',)
 
 templates = Jinja2Templates(directory="frontend/")
 
@@ -40,11 +41,6 @@ async def root(request: Request):
     )
 
 
-@app.post("/api/v1/cr", status_code=201)
-async def create_shift():
-    # print(request)
-    return {"done"}
-
 
 @app.exception_handler(RequestValidationError)
 async def validation_exception_handler(request: Request, exc: RequestValidationError):
@@ -55,9 +51,12 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
 
 
 @app.post(
-    "/api/v1/organisation/{org_id}/create", response_model=CreateNotice, status_code=201
+    "/api/v1/organisation/{org_id}/create", response_model=CreateNotice, summary="Creates Notices",status_code=201
 )
 async def create_notice_view(org_id: str, notices: CreateNotice):
+    """
+    This endpoint is used to creates notices for organisations
+    """
     db.save(
         "noticeboard",
         org_id,
