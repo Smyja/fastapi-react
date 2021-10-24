@@ -5,7 +5,7 @@ import requests
 
 
 CENTRIFUGO_TOKEN = "58c2400b-831d-411d-8fe8-31b6e337738b"
-settings.PLUGIN_ID=""
+settings_PLUGIN_ID="61694eea9ea5d3be97df2973"
 
 class Dbnoticeboard:
     """Class based DB to Read and write to zc_core using the read and write
@@ -17,15 +17,15 @@ class Dbnoticeboard:
         self.read_endpoint = (
             base_url
             + "/data/read/"
-            + f"{settings.PLUGIN_ID}"
+            + f"{settings_PLUGIN_ID}"
             + "/{collec_name}/{org_id}?{query}"
         )
         self.write_endpoint = base_url + "/data/write"
         self.delete_endpoint = base_url + "/data/delete"
         self.centrifugo_url = "https://realtime.zuri.chat/api"
-        self.upload_api = base_url + "/upload/file/" + f"{settings.PLUGIN_ID}"
-        self.upload_multiple_api = base_url + "/upload/files/" + f"{settings.PLUGIN_ID}"
-        self.delete_file_api = base_url + "/delete/file/" + f"{settings.PLUGIN_ID}"
+        self.upload_api = base_url + "/upload/file/" + f"{settings_PLUGIN_ID}"
+        self.upload_multiple_api = base_url + "/upload/files/" + f"{settings_PLUGIN_ID}"
+        self.delete_file_api = base_url + "/delete/file/" + f"{settings_PLUGIN_ID}"
 
     def post_to_centrifugo(self, channel_name: str, data: dict):
 
@@ -72,7 +72,7 @@ class Dbnoticeboard:
         It does this using the collection name and the serialized json
         """
         data = {
-            "plugin_id": settings.PLUGIN_ID,
+            "plugin_id": settings_PLUGIN_ID,
             "organization_id": org_id,
             "collection_name": collection_name,
             "bulk_write": False,
@@ -97,7 +97,7 @@ class Dbnoticeboard:
         It does this using the collection name and the serialized json
         """
         data = {
-            "plugin_id": settings.PLUGIN_ID,
+            "plugin_id": settings_PLUGIN_ID,
             "organization_id": org_id,
             "collection_name": collection_name,
             "bulk_write": False,
@@ -117,7 +117,7 @@ class Dbnoticeboard:
     def delete(self, org_id, collection_name, object_id):
         """Used to delete a data from the DB."""
         data = {
-            "plugin_id": settings.PLUGIN_ID,
+            "plugin_id": settings_PLUGIN_ID,
             "organization_id": org_id,
             "collection_name": collection_name,
             "bulk_delete": False,
