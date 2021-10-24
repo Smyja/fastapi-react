@@ -51,7 +51,7 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
 
 
 @app.post(
-    "/api/v1/organisation/{org_id}/create", response_model=CreateNotice, summary="Creates Notices",status_code=201
+    "/api/v1/organisation/{org_id}/create", response_model=CreateNotice, summary="Creates Notices",tags=["Notices"],status_code=201
 )
 async def create_notice_view(org_id: str, notices: CreateNotice):
     """
