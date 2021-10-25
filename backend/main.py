@@ -157,29 +157,34 @@ def delete_notice(object_id: str, org_id: str, response: Response):
 
 @app.patch(
     "/api/v1/organisation/{org_id}/notices/{object_id}/edit",
-    response_model=CreateNotice,
+    response_model=UpdateNotice,
+    response_model_exclude_none=True,
     summary="Updates Notices",
     tags=["Notices"],
     status_code=201,
 )
 async def update_notice_view(request: Request,object_id:str, org_id:str,notices: UpdateNotice):
     """Update A Notice In A Database."""
+
     notice= await request.json()
+    print("w"*50)
     print(notice)
-    db.update("noticeboard", org_id, notice, object_id=object_id)
+    updated=db.update("noticeboard", org_id, notice, object_id=object_id)
+    if updated["status"]==200:
 
-    data = db.read("noticeboard", org_id)
 
-    db.post_to_centrifugo("team-aquinas-zuri-challenge-007", data)
+        data = db.read("noticeboard", org_id)
 
-    return JSONResponse(
-        {
-            "success": True,
-            "data": notice,
-            "message": "Notice has been successfully updated",
-        },
-        status_code=status.HTTP_201_CREATED,
-    )
+        db.post_to_centrifugo("team-aquinas-zuri-challenge-007", data)
+
+        return JSONResponse(
+            {
+                "success": True,
+                "data": notice,
+                "message": "Notice has been successfully updated",
+            },
+            status_code=status.HTTP_201_CREATED,
+        )
     return JSONResponse(
     {"success": False, "message": "Notice not updated, Please Try Again"},
     status_code=status.HTTP_400_BAD_REQUEST,)
