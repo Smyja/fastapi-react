@@ -119,3 +119,29 @@ async def view_notice(org_id: str,response: Response):
     )
     return JSONResponse(status_code=status.HTTP_400_BAD_REQUEST)
 
+
+@app.delete(
+    "/api/v1/organisation/{org_id}/notices/{object_id}/delete", summary="Delete Notices",tags=["Notices"])
+def delete_notice(object_id:str, org_id:str,response: Response):
+    """Delete a notice from the database."""
+    deleted_data = db.delete(
+            collection_name="noticeboard", org_id=org_id, object_id=object_id
+        )
+    data = db.read("noticeboard", org_id)
+
+    db.post_to_centrifugo("team-aquinas-zuri-challenge-007", data)
+
+    if deleted_data["status"] == 200:
+        return JSONResponse(
+                {"success": True, "message": "Delete Operation Successful"},
+                status_code=status.HTTP_200_OK,
+            )
+    return JSONResponse(
+            {
+                "success": False,
+                "message": "Delete Operation Failed. Object does not exist in the database",
+            },
+            status_code=status.HTTP_404_NOT_FOUND,
+        )
+    return JSONResponse(status_code=status.HTTP_400_BAD_REQUEST)
+
