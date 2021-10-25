@@ -2,11 +2,13 @@ from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.templating import Jinja2Templates
 from starlette import status
+from fastapi import status, Response
 from fastapi.responses import JSONResponse
 from fastapi.encoders import jsonable_encoder
 from fastapi.exceptions import RequestValidationError
 import json
 from typing import Optional
+from starlette.exceptions import HTTPException
 from storage.db import db
 from utils.utils import user_rooms
 from storage.models import CreateNotice
@@ -91,3 +93,29 @@ async def create_notice_view(org_id: str, notices: CreateNotice):
     # db.post_to_centrifugo(f"{org_id}_{user_id}_sidebar", update_notice)
 
     return notice
+    
+@app.get(
+    "/api/v1/organisation/{org_id}/notices", summary="List of Notices",tags=["Notices"])
+async def view_notice(org_id: str,response: Response):
+
+    """This endpoint returns all the notices created under a particular
+    organisation in the database."""
+
+    # org_id = "613a1a3b59842c7444fb0220"
+    notice = db.read("noticeboard", org_id)
+    if notice["data"] is not None:
+        get_data = notice["data"]
+        reversed_list = get_data[::-1]
+        # print(reversed_list)
+        notice.update(data=reversed_list)
+    else:
+        notice["data"] = {}
+    if notice["status"] == 200:
+        print(notice)
+        return JSONResponse(notice, status_code=status.HTTP_200_OK)
+    return JSONResponse(
+        {"status": False, "message": "retrieved unsuccessfully"},
+        status_code=status.HTTP_404_NOT_FOUND,
+    )
+    return JSONResponse(status_code=status.HTTP_400_BAD_REQUEST)
+
