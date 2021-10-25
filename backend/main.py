@@ -5,6 +5,7 @@ from starlette import status
 from fastapi.responses import JSONResponse
 from fastapi.encoders import jsonable_encoder
 from fastapi.exceptions import RequestValidationError
+import json
 from typing import Optional
 from storage.db import db
 from utils.utils import user_rooms
@@ -57,10 +58,13 @@ async def create_notice_view(org_id: str, notices: CreateNotice):
     """
     This endpoint is used to creates notices for organisations
     """
+    notice=notices.dict()
+
+
     db.save(
         "noticeboard",
         org_id,
-        notice_data=notices,
+        notice_data=notice,
     )
     updated_data = db.read("noticeboard", org_id)
 
@@ -69,21 +73,21 @@ async def create_notice_view(org_id: str, notices: CreateNotice):
     #     "data": updated_data
     # }
 
-    user_id = request.GET.get("user")
+    # user_id = request.GET.get("user")
 
-    update_notice = {
-        "event": "sidebar_update",
-        "plugin_id": "noticeboard.zuri.chat",
-        "data": {
-            "name": "Noticeboard Plugin",
-            "group_name": "Noticeboard",
-            "show_group": False,
-            "button_url": "/noticeboard",
-            "public_rooms": [],
-            "joined_rooms": user_rooms(org_id, user_id),
-        },
-    }
-    db.post_to_centrifugo("team-aquinas-zuri-challenge-007", updated_data)
-    db.post_to_centrifugo(f"{org_id}_{user_id}_sidebar", update_notice)
+    # update_notice = {
+    #     "event": "sidebar_update",
+    #     "plugin_id": "noticeboard.zuri.chat",
+    #     "data": {
+    #         "name": "Noticeboard Plugin",
+    #         "group_name": "Noticeboard",
+    #         "show_group": False,
+    #         "button_url": "/noticeboard",
+    #         "public_rooms": [],
+    #         "joined_rooms": user_rooms(org_id, user_id),
+    #     },
+    # }
+    # db.post_to_centrifugo("team-aquinas-zuri-challenge-007", updated_data)
+    # db.post_to_centrifugo(f"{org_id}_{user_id}_sidebar", update_notice)
 
-    return notices
+    return notice

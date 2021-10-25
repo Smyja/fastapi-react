@@ -12,3 +12,15 @@ class CreateNotice(BaseModel):
     message: str
     media: Optional[List[AnyUrl]] = []
     views: str = 0
+
+# a=CreateNotice(
+#   title= "string",
+#   created="2019-08-24T14:15:22Z",
+#   author_name= "string",
+#   author_username= "string",
+#   author_img_url= "http://example.com",
+#   message= "string",
+#   media= [],
+#   views= 0
+# )
+# print(a.json())

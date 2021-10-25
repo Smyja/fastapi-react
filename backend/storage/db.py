@@ -80,7 +80,7 @@ class Dbnoticeboard:
             "payload": notice_data,
         }
 
-        data = json.dumps(data).encode("utf-8")
+        data = json.dumps(data,default=str).encode("utf-8")
         print(data)
         try:
             res = requests.post(self.write_endpoint, data)
