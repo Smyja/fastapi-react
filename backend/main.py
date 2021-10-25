@@ -13,8 +13,10 @@ from storage.db import db
 from utils.utils import user_rooms
 from storage.models import CreateNotice
 
-app = FastAPI(title='Noticeboard API',
-    description='Swagger Documentaion For the Noticeboard plugin',)
+app = FastAPI(
+    title="Noticeboard API",
+    description="Swagger Documentaion For the Noticeboard plugin",
+)
 
 templates = Jinja2Templates(directory="frontend/")
 
@@ -44,7 +46,6 @@ async def root(request: Request):
     )
 
 
-
 @app.exception_handler(RequestValidationError)
 async def validation_exception_handler(request: Request, exc: RequestValidationError):
     return JSONResponse(
@@ -54,14 +55,17 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
 
 
 @app.post(
-    "/api/v1/organisation/{org_id}/create", response_model=CreateNotice, summary="Creates Notices",tags=["Notices"],status_code=201
+    "/api/v1/organisation/{org_id}/create",
+    response_model=CreateNotice,
+    summary="Creates Notices",
+    tags=["Notices"],
+    status_code=201,
 )
 async def create_notice_view(org_id: str, notices: CreateNotice):
     """
     This endpoint is used to creates notices for organisations
     """
-    notice=notices.dict()
-
+    notice = notices.dict()
 
     db.save(
         "noticeboard",
@@ -93,10 +97,12 @@ async def create_notice_view(org_id: str, notices: CreateNotice):
     # db.post_to_centrifugo(f"{org_id}_{user_id}_sidebar", update_notice)
 
     return notice
-    
+
+
 @app.get(
-    "/api/v1/organisation/{org_id}/notices", summary="List of Notices",tags=["Notices"])
-async def view_notice(org_id: str,response: Response):
+    "/api/v1/organisation/{org_id}/notices", summary="List of Notices", tags=["Notices"]
+)
+async def view_notice(org_id: str, response: Response):
 
     """This endpoint returns all the notices created under a particular
     organisation in the database."""
@@ -121,27 +127,29 @@ async def view_notice(org_id: str,response: Response):
 
 
 @app.delete(
-    "/api/v1/organisation/{org_id}/notices/{object_id}/delete", summary="Delete Notices",tags=["Notices"])
-def delete_notice(object_id:str, org_id:str,response: Response):
+    "/api/v1/organisation/{org_id}/notices/{object_id}/delete",
+    summary="Delete Notices",
+    tags=["Notices"],
+)
+def delete_notice(object_id: str, org_id: str, response: Response):
     """Delete a notice from the database."""
     deleted_data = db.delete(
-            collection_name="noticeboard", org_id=org_id, object_id=object_id
-        )
+        collection_name="noticeboard", org_id=org_id, object_id=object_id
+    )
     data = db.read("noticeboard", org_id)
 
     db.post_to_centrifugo("team-aquinas-zuri-challenge-007", data)
 
     if deleted_data["status"] == 200:
         return JSONResponse(
-                {"success": True, "message": "Delete Operation Successful"},
-                status_code=status.HTTP_200_OK,
-            )
-    return JSONResponse(
-            {
-                "success": False,
-                "message": "Delete Operation Failed. Object does not exist in the database",
-            },
-            status_code=status.HTTP_404_NOT_FOUND,
+            {"success": True, "message": "Delete Operation Successful"},
+            status_code=status.HTTP_200_OK,
         )
+    return JSONResponse(
+        {
+            "success": False,
+            "message": "Delete Operation Failed. Object does not exist in the database",
+        },
+        status_code=status.HTTP_404_NOT_FOUND,
+    )
     return JSONResponse(status_code=status.HTTP_400_BAD_REQUEST)
-
