@@ -109,6 +109,7 @@ class Dbnoticeboard:
         try:
             res = requests.put(self.write_endpoint, json=data)
             response = res.json()
+            print("w"*5)
             print(response)
             return response
         except requests.ConnectionError as error:

@@ -13,6 +13,14 @@ class CreateNotice(BaseModel):
     media: Optional[List[AnyUrl]] = []
     views: str = 0
 
+class UpdateNotice(BaseModel):
+    title: Optional[constr(max_length=255)]
+    author_name: Optional[str]
+    author_username: Optional[str]
+    author_img_url: Optional[AnyUrl]
+    message: Optional[str]
+    media: Optional[List[AnyUrl]] = []
+    views: Optional[str] = 0
 # a=CreateNotice(
 #   title= "string",
 #   created="2019-08-24T14:15:22Z",
