@@ -166,7 +166,9 @@ def delete_notice(object_id: str, org_id: str, response: Response):
 async def update_notice_view(request: Request,object_id:str, org_id:str,notices: UpdateNotice):
     """Update A Notice In A Database."""
 
-    notice= await request.json()
+    notice= notices.dict(exclude_unset=True)
+    #61767acbbc003777d000a92a
+
     print("w"*50)
     print(notice)
     updated=db.update("noticeboard", org_id, notice, object_id=object_id)
