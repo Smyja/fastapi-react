@@ -67,7 +67,7 @@ class Dbnoticeboard:
             print("Oops: There is a problem with the Request", error)
             return error
 
-    def save(self, collection_name, org_id, notice_data):
+    def save(self, collection_name:str, org_id:str, notice_data:dict)->dict:
         """This method stores noticeboard related data as json to the Db.
 
         It does this using the collection name and the serialized json
@@ -116,7 +116,7 @@ class Dbnoticeboard:
             print("Oops: There is a problem with the Request", error)
             return error
 
-    def delete(self, org_id, collection_name, object_id):
+    def delete(self, org_id:str, collection_name:str, object_id:str):
         """Used to delete a data from the DB."""
         data = {
             "plugin_id": settings_PLUGIN_ID,
