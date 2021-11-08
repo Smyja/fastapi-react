@@ -48,7 +48,7 @@ class Dbnoticeboard:
         print("=" * 50)
         return response
 
-    def read(self, collection_name, org_id, filter={}):
+    def read(self, collection_name:str, org_id:str, filter={}):
         """Gets json data from the Db."""
 
         query = urlencode(filter)
@@ -122,7 +122,7 @@ class Dbnoticeboard:
             "plugin_id": settings_PLUGIN_ID,
             "organization_id": org_id,
             "collection_name": collection_name,
-            "bulk_delete": False,
+            "bulk_delete": True,
             "object_id": object_id,
             "filter": {},
         }
