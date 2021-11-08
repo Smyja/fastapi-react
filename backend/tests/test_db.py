@@ -18,13 +18,11 @@ def test_view_notices():
         "title": "string",
         "views": "0",
     }
-    response = client.get("/api/v1/organisation/61767acbbc003777d000a92a/notices")
-    assert response.status_code == 200
-    response_data = response.json()
-    notices = response_data["data"]
-    reversed_list = notices[::-1]
+    response = db.read("noticeboard", org_id="61767acbbc003777d000a92a")
+    assert response["status"] == 200
+    notices = response["data"]
 
-    assert reversed_list[0] == notice_sample_data
+    assert notices[0] == notice_sample_data
 
 
 # def test_create_notice():
