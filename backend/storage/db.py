@@ -184,5 +184,7 @@ class Dbnoticeboard:
         new_token = get_token["data"]["user"]["token"]
         return new_token
 
+    
+
 
 db = Dbnoticeboard()

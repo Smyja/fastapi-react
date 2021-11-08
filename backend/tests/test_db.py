@@ -1,12 +1,11 @@
-# import pytest
-import requests.exceptions
-import responses
-import unittest
-import unittest.mock as mock
+from fastapi.testclient import TestClient
 
-# from storage.db import db
-from requests.exceptions import HTTPError
 from main import app
 
-print(app)
+client = TestClient(app)
 
+
+def test_create_notie():
+    response = client.get("/api/v1/organisation/61767acbbc003777d000a92a/notices")
+    assert response.status_code == 200
+    assert response.json() == {"msg": "Hello World"}
