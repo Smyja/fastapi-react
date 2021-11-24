@@ -1,6 +1,7 @@
 from datetime import datetime
 from typing import List, Optional
 from pydantic import BaseModel, constr, AnyUrl,Field
+from utils.utils import random_string
 
 
 class CreateNotice(BaseModel):
@@ -32,3 +33,28 @@ class UpdateNotice(BaseModel):
 #   views= 0
 # )
 # print(a.json())
+
+class NoticeboardRoom(BaseModel):
+    room_id: str = random_string()
+    is_admin: Optional[str] = None
+    room_name: str
+    private = bool = False
+    room_member_id: List[str] = []
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+
+class InstallPlugin(BaseModel):
+    organisation_id: str
+    user_id: str
+
+class UninstallPlugin(BaseModel):
+    organisation_id: str
+    user_id: str
+
+class BookmarkNotice(BaseModel):
+    notice_id: str
+    user_id: str
+
+class NoticeDraft(BaseModel):
+    title: constr(max_length=255)
+    time: datetime
+    date: datetime
