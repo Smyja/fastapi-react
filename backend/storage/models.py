@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, time, date
 from typing import List, Optional
 from pydantic import BaseModel, constr, AnyUrl,Field
 from utils.utils import random_string
@@ -56,8 +56,8 @@ class BookmarkNotice(BaseModel):
 
 class NoticeDraft(BaseModel):
     title: constr(max_length=255)
-    time: datetime
-    date: datetime
+    time: time
+    date: date
 
 class EmailSubscribe(BaseModel):
     email: str
