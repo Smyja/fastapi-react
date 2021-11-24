@@ -701,3 +701,53 @@ async def search_suggestions(org_id: str):
                 "data": data,
             }
         )
+
+@app.get(
+    "/api/v1/organisation/{org_id}/attachfile",
+    tags=['Files'],
+    summary="List Attached Files",
+)
+def get_attached_file(org_id: str):
+    """This endpoint is a send message endpoint that can take files, upload
+    them and return the urls to the uploaded files to the media list in the
+    message serializer This endpoint uses form data The file must be passed in
+    with the key "file"."""
+
+    notice = db.read("noticeboard", org_id)
+    get_data = notice["data"]
+    reversed_list = get_data[::-1]
+    print(reversed_list)
+    notice.update(data=reversed_list)
+    if notice["status"] == 200:
+        print(notice)
+        return JSONResponse(
+            {
+                "success":True,
+                "data": notice["data"],
+                "message": "successfully retrieved"
+            }, 
+            status_code=status.HTTP_200_OK)
+    return JSONResponse(
+        {"status": False, "message": "retrieved unsuccessfully"},
+        status_code=status.HTTP_400_BAD_REQUEST,
+    )
+
+@app.post(
+    "/api/v1/organisation/{org_id}/attachfile",
+    tags=['Files'],
+    summary="Send Files",
+)
+async def send_files(request: Request, org_id: str):
+    file_urls = []
+    files = request.FILES.getlist("file")
+
+    token = request.META.get("HTTP_AUTHORIZATION")
+    if request.FILES and len(files) == 1:
+        for file in request.FILES.getlist("file"):
+            file_data = db.upload(file=file, token=token)
+            if file_data["status"] == 200:
+                for datum in file_data["data"]["files_info"]:
+                    file_urls.append(datum["file_url"])
+                return JSONResponse(file_data)
+            return JSONResponse(file_data)
+    return JSONResponse({"success": False, "message": "No file has been attached"})
