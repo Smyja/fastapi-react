@@ -491,24 +491,17 @@ def delete_bookmarked_notice(org_id: str, obj_id: str):
     "/api/v1/organisation/{org_id}/create_draft",
     tags=["Notices"],
     summary="Draft Of A Notice",
+    status_code=201,
 )
-def notice_draft(org_id: str, draft: NoticeDraft):
+def notice_draft(org_id: str, notice_draft: NoticeDraft):
     """For creating Drafts for A Notice."""
-    serializer = draft.dict()
-    if serializer.is_valid():
-        db.save("noticeboard", org_id, notice_data=serializer)
-        return JSONResponse({
-            "success":True,
-            "data":serializer,
-            "message":"successfully drafted"
-        },
-        status_code=status.HTTP_201_CREATED)
-
+    serializer = jsonable_encoder(notice_draft)
+    draft = db.save("noticeboard", org_id, notice_data=serializer)
     return JSONResponse({
-        "success":False,
-        "message":"could not be drafted"
-    }, 
-    status_code=status.HTTP_400_BAD_REQUEST)
+        "success":True,
+        "data":serializer,
+        "message":"successfully drafted"
+    })
 
 @app.get(
     "/api/v1/organisation/email-notification",
