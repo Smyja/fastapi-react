@@ -58,3 +58,10 @@ class NoticeDraft(BaseModel):
     title: constr(max_length=255)
     time: datetime
     date: datetime
+
+class EmailSubscribe(BaseModel):
+    email: str
+
+class AddMemberToRoom(BaseModel):
+    room_id: constr(max_length=50)
+    member_ids: List[constr(max_length=50)]

@@ -11,12 +11,13 @@ from typing import Optional
 from starlette.exceptions import HTTPException
 from storage.db import db
 from utils.utils import user_rooms
+from utils.emails import *
 from storage.models import *
 import requests
 
 app = FastAPI(
     title="Noticeboard API",
-    description="Swagger Documentaion For the Noticeboard plugin",
+    description="Swagger Documentaion For the Noticeboard Plugin",
 )
 
 templates = Jinja2Templates(directory="frontend/")
@@ -64,8 +65,6 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
 def sidebar_info(org_id: str, user_id: str):
     """Returns the room the logged in user belongs to under Noticeboard
     plugin"""
-    # org_id = request.GET.get("org")
-    # user_id = request.GET.get("user")
 
     if org_id and user_id:
         sidebar = {
@@ -85,20 +84,19 @@ def sidebar_info(org_id: str, user_id: str):
         {"message": "org id or user id is None"}, status_code=status.HTTP_400_BAD_REQUEST
     )
 
-# def create_plugin_room(org_id, user_id):
-#     """Function that creates a Noticeboard room"""
-#     room = db.read("noticeboard_room", org_id)
-#     if room["status"] == 200:
-#         if room["data"] is not None:
-#             room = room["data"][0]
-#         else:
-#             serializer = NoticeboardRoom(data={"room_name": "Noticeboard"})
-#             if serializer.is_valid():
-#                 room = serializer.data
-#                 room.update({"is_admin": user_id})
-#                 if user_id not in room["room_member_id"]:
-#                     room.update({"room_member_id": [user_id]})
-#                     db.save("noticeboard_room", org_id, notice_data=room)
+def create_plugin_room(org_id: str, user_id: str):
+    """Function that creates a Noticeboard room"""
+    room = db.read("noticeboard_room", org_id)
+    if room["status"] == 200:
+        if room["data"] is not None:
+            room = room["data"][0]
+        else:
+            serializer = NoticeboardRoom(room_name="Noticeboard")
+            room = serializer.dict()
+            room.update({"is_admin": user_id})
+            if user_id not in room["room_member_id"]:
+                room.update({"room_member_id": [user_id]})
+                db.save("noticeboard_room", org_id, notice_data=room)
 
 
 @app.post(
@@ -107,7 +105,6 @@ def sidebar_info(org_id: str, user_id: str):
     summary="Install Noticeboard Plugin",
     status_code=200,
 )
-# async def install_plugin(request: Request, install: InstallPlugin, notice_room: NoticeboardRoom(room_name="Noticeboard")):
 async def install_plugin(request: Request, install: InstallPlugin):
     """This endpoint is called when an organisation wants to install the
     Noticeboard plugin for their workspace."""
@@ -134,16 +131,7 @@ async def install_plugin(request: Request, install: InstallPlugin):
     print(installed)
     if installed["status"] == 200:
 
-        # room = db.read("noticeboard_room", org_id)
-        # if room["status"] == 200:
-        #     if room["data"] is not None:
-        #         room = room["data"][0]
-        #     else:
-        #         room = notice_room.dict()
-        #         room.update({"is_admin": user_id})
-        #         if user_id not in room["room_member_id"]:
-        #             room.update({"room_member_id": [user_id]})
-        #             db.save("noticeboard_room", org_id, notice_data=room)
+        create_plugin_room(org_id, user_id)
 
         return JSONResponse(
             {
@@ -203,8 +191,7 @@ def uninstall_plugin(uninstall: UninstallPlugin):
 )
 async def create_noticeboard_room(org_id: str, user_id: str, notice_room: NoticeboardRoom):
     """Creates a room for the organisation under Noticeboard plugin."""
-    # org_id = "6145b49e285e4a18402073bc"
-    # org_id = "614679ee1a5607b13c00bcb7"
+    
     room = db.read("noticeboard_room", org_id)
     if room["status"] == 200:
         if room["data"] is not None:
@@ -275,7 +262,7 @@ async def create_notice_view(org_id: str, notices: CreateNotice):
     """
     This endpoint is used to creates notices for organisations
     """
-    notice = notices.dict()
+    notice = jsonable_encoder(notices)
 
     db.save(
         "noticeboard",
@@ -366,8 +353,6 @@ def delete_notice(object_id: str, org_id: str, response: Response):
         },
         status_code=status.HTTP_404_NOT_FOUND,
     )
-    return JSONResponse(status_code=status.HTTP_400_BAD_REQUEST)
-
 
 @app.patch(
     "/api/v1/organisation/{org_id}/notices/{object_id}/edit",
@@ -470,7 +455,9 @@ def create_bookmark(org_id: str, notice: BookmarkNotice):
     })
 
 @app.delete(
-    "/api/v1/organisation/{org_id}/bookmark/{obj_id}/delete"
+    "/api/v1/organisation/{org_id}/bookmark/{obj_id}/delete",
+    tags=["Bookmark"],
+    summary="Delete A Bookmarked Notice"
 )
 def delete_bookmarked_notice(org_id: str, obj_id: str):
     """This endpoint enables a user delete a bookmarked notice."""
@@ -522,3 +509,202 @@ def notice_draft(org_id: str, draft: NoticeDraft):
         "message":"could not be drafted"
     }, 
     status_code=status.HTTP_400_BAD_REQUEST)
+
+@app.get(
+    "/api/v1/organisation/email-notification",
+    tags=['Email'],
+    summary="Sends Email To Subscribers",
+)
+def email_notification(org: str, sendemail: str):
+    """
+    This endpoint is used to send email notifications to subscribed users
+    when new notices are published.
+    """
+
+    if org and sendemail == "true":
+        response_subscribers = db.read("email_subscribers", org)
+
+        if response_subscribers["status"] == 200 and response_subscribers["data"]:
+            email_subscribers = response_subscribers["data"]
+
+            # email sending setup
+            url = "https://api.zuri.chat/external/send-mail?custom_mail=1"
+
+            for user in email_subscribers:
+                email = user["email"]
+                payload = {
+                    "email": email,
+                    "subject": "notice",
+                    "content_type": "text/html",
+                    "mail_body": '<div style="background-color: chocolate; width: 100%; height: 50%;"><h1 style="color: white; text-align: center; padding: 1em">Noticeboard Plugin</h2></div><div style="margin: 0% 5% 10% 5%;"><h2>New Notice</h2><p>Hey!</p><br><p>You have a new notice!</p><p>Visit <a href="https://zuri.chat/">zuri chat</a> to view notice.</p><br><p>Cheers,</p><p>Noticeboard Plugin</p></div>',
+                }
+                requests.post(url=url, json=payload)
+
+            return JSONResponse(
+                {"status": "emails sent successfully"},
+                status_code=status.HTTP_200_OK,
+            )
+        return JSONResponse(
+            {"error": response_subscribers["message"]},
+            status_code=response_subscribers["status"],
+        )
+
+    return JSONResponse(
+        {
+            "status": "no emails sent, check if org is not null or if send has a boolean value of true"
+        }
+    )
+
+@app.post(
+    "/api/v1/organisation/email-subscription",
+    tags=['Email'],
+    summary="Enable Users Subscribe"
+)
+async def email_subscription(org: str, user: str, subscribe: EmailSubscribe):
+    """
+    This endpoint is used to allow users subscribe to receiving email
+    notifications when new notices are published.
+    """
+
+    if org and user:  # and user_id
+        serializer = subscribe.dict()
+        user_email = serializer["email"]
+        user_data = {"user_id": user, "email": user_email}
+
+        response_subscribers = db.read("email_subscribers", org)
+
+        if response_subscribers["status"] == 200 and response_subscribers["data"]:
+            for user_obj in response_subscribers["data"]:
+                if user == user_obj["user_id"]:
+                    return JSONResponse(
+                        {"status": "already subscribed"},
+                        status_code=status.HTTP_409_CONFLICT,
+                    )
+
+            # if user_id doesn't exist, then the user is subscribed
+            db.save("email_subscribers", org, user_data)
+            subscription_success_mail(email=user_email)
+            return JSONResponse(
+                {"status": "subscription successful", "data": user_data},
+                status_code=status.HTTP_201_CREATED,
+            )
+
+        return JSONResponse(
+            {"status": response_subscribers["message"]},
+            status_code=response_subscribers["status"],
+        )
+
+    return JSONResponse(
+        {"status": "no action taken, check org and/or user parameter values"}
+    )
+
+@app.post(
+    "/api/v1/organisation/{org_id}/room/{room_id}/members/{member_id}",
+    tags=["Room"],
+    summary="Add Members To Room",
+)
+async def add_users_to_room(org_id: str, room_id: str, member_id: str, room_members: AddMemberToRoom):
+    """
+    This endpoint enables a user to be added to a room
+    """
+    serializer = room_members.dict()
+    room_id = serializer["room_id"]
+    member_ids = serializer["member_ids"]
+    room = db.read("noticeboard_room", org_id, filter={"room_id": room_id})
+    if room["status"] == 200:
+        user_room = room["data"][0]
+        room_members = user_room["room_member_id"]
+        for member_id in member_ids:
+            if member_id not in room_members:
+                room_members.append(member_id)
+                user_room.update({"room_member_id": room_members})
+                new_data = user_room
+                db.update(
+                    "noticeboard_room",
+                    org_id,
+                    {"room_member_id": new_data["room_member_id"]},
+                    user_room["_id"],
+                )
+
+        return JSONResponse(
+            {"message": "successfully added", "data": user_room},
+            status_code=status.HTTP_201_CREATED,
+        )
+    return JSONResponse(
+        {"message": "could not be added"},
+        status_code=status.HTTP_400_BAD_REQUEST,
+    )
+
+@app.patch(
+    "/api/v1/organisation/{org_id}/room/{room_id}/members/{member_id}",
+    tags=["Room"],
+    summary="Remove Members From Room",
+)
+async def patch(org_id: str, room_id: str, member_id: str, room_members: AddMemberToRoom):
+    """
+    This endpoint enables a user to be removed from a room
+    """
+    serializer = room_members.dict()
+    room_id = serializer["room_id"]
+    member_ids = serializer["member_ids"]
+    room = db.read("noticeboard_room", org_id, filter={"room_id": room_id})
+    if room["status"] == 200:
+        user_room = room["data"][0] 
+        room_members = user_room["room_member_id"]
+        for member_id in member_ids:
+            if member_id in room_members:
+                room_members.remove(member_id)
+                user_room.update({"room_member_id": room_members})
+                new_data = user_room
+                db.update(
+                    "noticeboard_room",
+                    org_id,
+                    {"room_member_id": new_data["room_member_id"]},
+                    user_room["_id"],
+                )
+
+        return JSONResponse(
+            {"message": "successfully removed", "data": user_room},
+            status_code=status.HTTP_200_OK,
+        )
+    return JSONResponse(
+        {"message": "could not be removed"},
+        status_code=status.HTTP_400_BAD_REQUEST,
+    )
+
+@app.get(
+    "/api/v1/search-suggestions/{org_id}",
+    tags=['Search'],
+    summary='Returns Search Suggestion',
+)
+async def search_suggestions(org_id: str):
+    """Returns search suggestion"""
+
+    notices = db.read("noticeboard", org_id)["data"]
+
+    data = {}
+
+    try:
+        for notice in notices:
+            data[notice["message"]] = notice["message"]
+
+        return Response(
+            {
+                "status": "ok",
+                "type": "suggestions",
+                "total_count": len(data),
+                "data": data,
+            },
+            status=status.HTTP_200_OK,
+        )
+
+    except Exception as e:
+        print(e)
+        return Response(
+            {
+                "status": "ok",
+                "type": "suggestions",
+                "total_count": len(data),
+                "data": data,
+            }
+        )
