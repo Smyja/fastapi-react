@@ -59,8 +59,8 @@ class Dbnoticeboard:
 
         try:
             res = requests.get(url=url).json()
-            print("Working.................!")
-            print(res)
+            # print("Working.................!")
+            # print(res)
             return res
 
         except requests.ConnectionError as error:
@@ -84,7 +84,7 @@ class Dbnoticeboard:
         print(data)
         try:
             res = requests.post(self.write_endpoint, data)
-            print(res.text)
+            # print(res.text)
             res.raise_for_status()
             return res.text
         except requests.ConnectionError as error:
@@ -109,8 +109,8 @@ class Dbnoticeboard:
         try:
             res = requests.put(self.write_endpoint, json=data)
             response = res.json()
-            print("w"*5)
-            print(response)
+            # print("w"*5)
+            # print(response)
             return response
         except requests.ConnectionError as error:
             print("Oops: There is a problem with the Request", error)
@@ -130,7 +130,7 @@ class Dbnoticeboard:
         try:
             res = requests.post(self.delete_endpoint, json.dumps(data))
             response = res.json()
-            print(response)
+            # print(response)
             return response
         except requests.ConnectionError as error:
             print("Oops: There is a problem with the Request", error)
