@@ -7,7 +7,9 @@ from fastapi.responses import JSONResponse
 from fastapi.encoders import jsonable_encoder
 from fastapi.exceptions import RequestValidationError
 import json
+import time
 from typing import Optional
+from datetime import datetime, date
 from starlette.exceptions import HTTPException
 from storage.db import db
 from utils.utils import user_rooms
@@ -310,21 +312,21 @@ async def view_notice(org_id: str, response: Response):
 
     # org_id = "613a1a3b59842c7444fb0220"
     notice = db.read("noticeboard", org_id)
-    if notice["data"] is not None:
-        get_data = notice["data"]
-        reversed_list = get_data[::-1]
-        # print(reversed_list)
-        notice.update(data=reversed_list)
-    else:
-        notice["data"] = {}
+    get_data = notice["data"] or {}
+    reversed_list = get_data[::-1]
+    # print(reversed_list)
+    notice.update(data=reversed_list)
     if notice["status"] == 200:
-        print(notice)
-        return JSONResponse(notice, status_code=status.HTTP_200_OK)
+        # print(notice)
+        return JSONResponse({
+            "success": True,
+            "data": notice["data"],
+            "message": "retrieved successfully"
+        }, status_code=status.HTTP_200_OK)
     return JSONResponse(
         {"status": False, "message": "retrieved unsuccessfully"},
         status_code=status.HTTP_404_NOT_FOUND,
     )
-    return JSONResponse(status_code=status.HTTP_400_BAD_REQUEST)
 
 
 @app.delete(
@@ -368,15 +370,15 @@ async def update_notice_view(request: Request,object_id:str, org_id:str,notices:
     notice= notices.dict(exclude_unset=True)
     #61767acbbc003777d000a92a
 
-    print("w"*50)
-    print(notice)
-    updated=db.update("noticeboard", org_id, notice, object_id=object_id)
+    # print("w"*50)
+    # print(notice)
+    updated = db.update("noticeboard", org_id, notice, object_id=object_id)
     if updated["status"]==200:
 
 
-        data = db.read("noticeboard", org_id)
+        # data = db.read("noticeboard", org_id)
 
-        db.post_to_centrifugo("team-aquinas-zuri-challenge-007", data)
+        # db.post_to_centrifugo("team-aquinas-zuri-challenge-007", data)
 
         return JSONResponse(
             {
@@ -751,3 +753,66 @@ async def send_files(request: Request, org_id: str):
                 return JSONResponse(file_data)
             return JSONResponse(file_data)
     return JSONResponse({"success": False, "message": "No file has been attached"})
+
+@app.post(
+    "/api/v1/organisation/{org_id}/schedule",
+    response_model=ScheduleNotice,
+    summary="Schedules Notices",
+    tags=["Notices"],
+    status_code=200,
+)
+async def schedule_notice(org_id: str, notices: ScheduleNotice):
+    """
+    This endpoint is used to scheduke notices for organisations
+    """
+    notice_dict = notices.dict()
+
+    get_timer = notice_dict["timer"]
+    time_format="%Y-%m-%d %H:%M:%S"
+    formatted_time=get_timer.strftime(time_format)
+
+    print(get_timer)
+    remove_timer=notice_dict.pop("timer")
+    print(notice_dict)
+    now = datetime.now()
+    timer = datetime.strptime(formatted_time, "%Y-%m-%d %H:%M:%S")
+    
+    duration = timer - now
+    duration = duration.total_seconds()
+    time.sleep(duration)
+
+    db.save(
+        "noticeboard",
+        org_id,
+        notice_data=notice_dict,
+    )
+    updated_data = db.read("noticeboard", org_id)
+
+    # created_notice = {
+    #     "event":"create_notice",
+    #     "data": updated_data
+    # }
+
+    # user_id = request.GET.get("user")
+
+    # update_notice = {
+    #     "event": "sidebar_update",
+    #     "plugin_id": "noticeboard.zuri.chat",
+    #     "data": {
+    #         "name": "Noticeboard Plugin",
+    #         "group_name": "Noticeboard",
+    #         "show_group": False,
+    #         "button_url": "/noticeboard",
+    #         "public_rooms": [],
+    #         "joined_rooms": user_rooms(org_id, user_id),
+    #     },
+    # }
+    # db.post_to_centrifugo("team-aquinas-zuri-challenge-007", updated_data)
+    # db.post_to_centrifugo(f"{org_id}_{user_id}_sidebar", update_notice)
+
+    return JSONResponse({
+        "success":True,
+        "data":jsonable_encoder(notice_dict),
+        "message":"successfully created"
+    })
+
