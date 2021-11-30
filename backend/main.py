@@ -11,6 +11,7 @@ import time
 from typing import Optional
 from datetime import datetime, date
 from starlette.exceptions import HTTPException
+from fastapi import BackgroundTasks
 from storage.db import db
 from utils.utils import user_rooms
 from utils.emails import *
@@ -761,9 +762,9 @@ async def send_files(request: Request, org_id: str):
     tags=["Notices"],
     status_code=200,
 )
-async def schedule_notice(org_id: str, notices: ScheduleNotice):
+async def schedule_notice(org_id: str, notices: ScheduleNotice,background_tasks: BackgroundTasks):
     """
-    This endpoint is used to scheduke notices for organisations
+    This endpoint is used to schedule notices for organisations
     """
     notice_dict = notices.dict()
 
@@ -779,13 +780,24 @@ async def schedule_notice(org_id: str, notices: ScheduleNotice):
     
     duration = timer - now
     duration = duration.total_seconds()
-    time.sleep(duration)
 
-    db.save(
-        "noticeboard",
-        org_id,
-        notice_data=notice_dict,
-    )
+    def background_duration():
+        "A function for the background duration"
+        time.sleep(duration)
+        print("Duration reached, Now Sending notice")
+        return True
+
+    def db_save():
+        "A function for background save to db"
+        db.save(
+            "noticeboard",
+            org_id,
+            notice_data=notice_dict,
+        )
+        print("Saved to db")
+        return True
+    background_tasks.add_task(background_duration)
+    background_tasks.add_task(db_save)
     updated_data = db.read("noticeboard", org_id)
 
     # created_notice = {
