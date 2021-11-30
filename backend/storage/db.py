@@ -1,4 +1,5 @@
 import json
+from functools import lru_cache
 from urllib.parse import urlencode
 
 import requests
@@ -48,6 +49,7 @@ class Dbnoticeboard:
         print("=" * 50)
         return response
 
+   
     def read(self, collection_name:str, org_id:str, filter={}):
         """Gets json data from the Db."""
 

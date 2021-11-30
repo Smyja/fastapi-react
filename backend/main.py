@@ -7,7 +7,9 @@ from fastapi.responses import JSONResponse
 from fastapi.encoders import jsonable_encoder
 from fastapi.exceptions import RequestValidationError
 import json
+import time
 from typing import Optional
+from datetime import datetime, date
 from starlette.exceptions import HTTPException
 from storage.db import db
 from utils.utils import user_rooms
@@ -751,3 +753,66 @@ async def send_files(request: Request, org_id: str):
                 return JSONResponse(file_data)
             return JSONResponse(file_data)
     return JSONResponse({"success": False, "message": "No file has been attached"})
+
+@app.post(
+    "/api/v1/organisation/{org_id}/schedule",
+    response_model=ScheduleNotice,
+    summary="Schedules Notices",
+    tags=["Notices"],
+    status_code=200,
+)
+async def schedule_notice(org_id: str, notices: ScheduleNotice):
+    """
+    This endpoint is used to scheduke notices for organisations
+    """
+    notice_dict = notices.dict()
+
+    get_timer = notice_dict["timer"]
+    time_format="%Y-%m-%d %H:%M:%S"
+    formatted_time=get_timer.strftime(time_format)
+
+    print(get_timer)
+    remove_timer=notice_dict.pop("timer")
+    print(notice_dict)
+    now = datetime.now()
+    timer = datetime.strptime(formatted_time, "%Y-%m-%d %H:%M:%S")
+    
+    duration = timer - now
+    duration = duration.total_seconds()
+    time.sleep(duration)
+
+    db.save(
+        "noticeboard",
+        org_id,
+        notice_data=notice_dict,
+    )
+    updated_data = db.read("noticeboard", org_id)
+
+    # created_notice = {
+    #     "event":"create_notice",
+    #     "data": updated_data
+    # }
+
+    # user_id = request.GET.get("user")
+
+    # update_notice = {
+    #     "event": "sidebar_update",
+    #     "plugin_id": "noticeboard.zuri.chat",
+    #     "data": {
+    #         "name": "Noticeboard Plugin",
+    #         "group_name": "Noticeboard",
+    #         "show_group": False,
+    #         "button_url": "/noticeboard",
+    #         "public_rooms": [],
+    #         "joined_rooms": user_rooms(org_id, user_id),
+    #     },
+    # }
+    # db.post_to_centrifugo("team-aquinas-zuri-challenge-007", updated_data)
+    # db.post_to_centrifugo(f"{org_id}_{user_id}_sidebar", update_notice)
+
+    return JSONResponse({
+        "success":True,
+        "data":jsonable_encoder(notice_dict),
+        "message":"successfully created"
+    })
+

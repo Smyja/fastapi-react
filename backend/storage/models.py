@@ -1,6 +1,6 @@
-from datetime import datetime, time, date
+from datetime import datetime,  date
 from typing import List, Optional
-from pydantic import BaseModel, constr, AnyUrl,Field
+from pydantic import BaseModel, constr, AnyUrl,Field,ValidationError, validator
 from utils.utils import random_string
 
 
@@ -56,7 +56,7 @@ class BookmarkNotice(BaseModel):
 
 class NoticeDraft(BaseModel):
     title: constr(max_length=255)
-    time: time
+
     date: date
 
 class EmailSubscribe(BaseModel):
@@ -65,3 +65,23 @@ class EmailSubscribe(BaseModel):
 class AddMemberToRoom(BaseModel):
     room_id: constr(max_length=50)
     member_ids: List[constr(max_length=50)]
+
+class ScheduleNotice(BaseModel):
+    title: constr(max_length=255)
+    created: datetime = Field(default_factory=datetime.utcnow)
+    author_name: str
+    author_username: str
+    author_img_url: AnyUrl
+    message: str
+    media: Optional[List[AnyUrl]] = []
+    views: str = 0
+    timer: datetime 
+    
+    @validator('timer')
+    def validate_timer(cls,value):
+        if datetime.now() > value.replace(tzinfo=None):
+            print(datetime.now())
+            print(value.replace(tzinfo=None))
+            raise ValueError('Date cannot be in the past')
+        return value
+
