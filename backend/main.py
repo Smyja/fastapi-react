@@ -226,9 +226,6 @@ async def create_noticeboard_room(org_id: str, user_id: str, notice_room: Notice
 )
 def get_room(org_id: str):
     """Gets all the rooms created under the Noticeboard plugin."""
-    # org_id = "613a1a3b59842c7444fb0220"
-    # org_id = "6145b49e285e4a18402073bc"
-    # org_id = "614679ee1a5607b13c00bcb7"
     data = db.read("noticeboard_room", org_id)
     if data["data"] is None:
         data["data"] = {}
@@ -274,27 +271,6 @@ async def create_notice_view(org_id: str, notices: CreateNotice):
     )
     updated_data = db.read("noticeboard", org_id)
 
-    # created_notice = {
-    #     "event":"create_notice",
-    #     "data": updated_data
-    # }
-
-    # user_id = request.GET.get("user")
-
-    # update_notice = {
-    #     "event": "sidebar_update",
-    #     "plugin_id": "noticeboard.zuri.chat",
-    #     "data": {
-    #         "name": "Noticeboard Plugin",
-    #         "group_name": "Noticeboard",
-    #         "show_group": False,
-    #         "button_url": "/noticeboard",
-    #         "public_rooms": [],
-    #         "joined_rooms": user_rooms(org_id, user_id),
-    #     },
-    # }
-    # db.post_to_centrifugo("team-aquinas-zuri-challenge-007", updated_data)
-    # db.post_to_centrifugo(f"{org_id}_{user_id}_sidebar", update_notice)
 
     return JSONResponse({
         "success":True,
@@ -376,11 +352,6 @@ async def update_notice_view(request: Request,object_id:str, org_id:str,notices:
     updated = db.update("noticeboard", org_id, notice, object_id=object_id)
     if updated["status"]==200:
 
-
-        # data = db.read("noticeboard", org_id)
-
-        # db.post_to_centrifugo("team-aquinas-zuri-challenge-007", data)
-
         return JSONResponse(
             {
                 "success": True,
@@ -429,27 +400,7 @@ def bookmark_notice(org_id: str, user_id: str):
 def create_bookmark(org_id: str, notice: BookmarkNotice):
     """This endpoint enables a user to bookmark a notice."""
     serializer = notice.dict()
-
-    # bookmark_data = {
-    #     "user_id":serializer.data["user_id"],
-    #     "notice_data":notice["data"]
-    # }
-
     bookmarked_data = db.save("bookmark_notice", org_id, serializer)
-
-    # response = requests.get(f"https://noticeboard.zuri.chat/api/v1/organisation/{org_id}/get-room")
-    # room = response.json()
-    # room_id = room["data"][0]["_id"]
-
-    # notice = db.read('noticeboard',org_id, filter={"_id":serializer.data["notice_id"]})
-
-    # data = {
-    #     "event":"create_bookmark",
-    #     "data":notice["data"]
-    # }
-
-    # db.post_to_centrifugo("team-aquinas-zuri-challenge-007", data)
-    db.post_to_centrifugo("team-aquinas-zuri-challenge-007", bookmarked_data)
 
     return JSONResponse({
         "success":True,
@@ -465,20 +416,6 @@ def create_bookmark(org_id: str, notice: BookmarkNotice):
 def delete_bookmarked_notice(org_id: str, obj_id: str):
     """This endpoint enables a user delete a bookmarked notice."""
     bookmarked_notice = db.delete(org_id, "bookmark_notice", obj_id)
-
-    # bookmarked_data = db.read("bookmark_notice", org_id)
-
-    # data = {
-    #     "event":"delete_bookmark",
-    #     "data":bookmarked_data
-    # }
-
-    # response = requests.get(f"https://noticeboard.zuri.chat/api/v1/organisation/{org_id}/get-room")
-    # room = response.json()
-    # room_id = room["data"][0]["_id"]
-
-    # db.post_to_centrifugo("team-aquinas-zuri-challenge-007", data)
-    # db.post_to_centrifugo("team-aquinas-zuri-challenge-007", bookmarked_data)
 
     if bookmarked_notice["status"] == 200:
         return JSONResponse(
@@ -799,28 +736,6 @@ async def schedule_notice(org_id: str, notices: ScheduleNotice,background_tasks:
     background_tasks.add_task(background_duration)
     background_tasks.add_task(db_save)
     updated_data = db.read("noticeboard", org_id)
-
-    # created_notice = {
-    #     "event":"create_notice",
-    #     "data": updated_data
-    # }
-
-    # user_id = request.GET.get("user")
-
-    # update_notice = {
-    #     "event": "sidebar_update",
-    #     "plugin_id": "noticeboard.zuri.chat",
-    #     "data": {
-    #         "name": "Noticeboard Plugin",
-    #         "group_name": "Noticeboard",
-    #         "show_group": False,
-    #         "button_url": "/noticeboard",
-    #         "public_rooms": [],
-    #         "joined_rooms": user_rooms(org_id, user_id),
-    #     },
-    # }
-    # db.post_to_centrifugo("team-aquinas-zuri-challenge-007", updated_data)
-    # db.post_to_centrifugo(f"{org_id}_{user_id}_sidebar", update_notice)
 
     return JSONResponse({
         "success":True,
