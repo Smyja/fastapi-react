@@ -22,17 +22,6 @@ class UpdateNotice(BaseModel):
     message: Optional[str]
     media: Optional[List[AnyUrl]] = []
     views: Optional[str] 
-# a=CreateNotice(
-#   title= "string",
-#   created="2019-08-24T14:15:22Z",
-#   author_name= "string",
-#   author_username= "string",
-#   author_img_url= "http://example.com",
-#   message= "string",
-#   media= [],
-#   views= 0
-# )
-# print(a.json())
 
 class NoticeboardRoom(BaseModel):
     room_id: str = random_string()
