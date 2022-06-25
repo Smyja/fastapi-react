@@ -23,5 +23,3 @@ def test_view_notices():
     assert reversed_list[0] == notice_sample_data
 
 
-# def test_create_notice():
-#     db.save()
